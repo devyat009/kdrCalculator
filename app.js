@@ -63,6 +63,13 @@ const clearBtn = document.getElementById('clear-history');
 const snackbarContainer = document.getElementById('snackbar-container');
 const confirmSwapBtn = document.getElementById('confirm-swap');
 
+function updateSetBaseButtonState() {
+	if (!setBaseBtn) return;
+	const hasKills = baseKillsInput?.value !== '' && Number.isFinite(Number(baseKillsInput.value));
+	const hasDeaths = baseDeathsInput?.value !== '' && Number.isFinite(Number(baseDeathsInput.value));
+	setBaseBtn.disabled = !(hasKills && hasDeaths);
+}
+
 const integerFormatter = new Intl.NumberFormat('pt-BR', {
 	maximumFractionDigits: 0,
 });
@@ -245,13 +252,13 @@ function renderHistory(history) {
 	const baseKdr = calculateKdr(base.kills, base.deaths);
 	const currentKills = Number(killsInput.value);
 	const currentDeaths = Number(deathsInput.value);
-	const hasCurrentInputs = Number.isFinite(currentKills) && Number.isFinite(currentDeaths);
+	const hasCurrentInputs = killsInput.value.trim() !== '' && deathsInput.value.trim() !== '' && Number.isFinite(currentKills) && Number.isFinite(currentDeaths);
 	const latest = history[0];
 	const currentKdr = hasCurrentInputs
 		? calculateKdr(currentKills, currentDeaths)
 		: latest
 			? latest.kdr
-			: 0;
+			: (baseKdr > 0 ? baseKdr : 0);
 
 	if (!history.length) {
 		const empty = document.createElement('p');
@@ -321,9 +328,15 @@ function addCalculation(kills, deaths) {
 }
 
 function updateLiveOutputs() {
+	updateSetBaseButtonState();
+	if (killsInput.value.trim() === '' || deathsInput.value.trim() === '') {
+		renderHistory(loadHistory());
+		return;
+	}
 	const kills = Number(killsInput.value);
 	const deaths = Number(deathsInput.value);
 	if (!Number.isFinite(kills) || !Number.isFinite(deaths)) {
+		renderHistory(loadHistory());
 		return;
 	}
 	const kdr = calculateKdr(kills, deaths);
@@ -418,8 +431,9 @@ function clearHistory() {
 
 historyLimitInput.value = getLimit();
 const base = loadBase();
-baseKillsInput.value = base.kills;
-baseDeathsInput.value = base.deaths;
+// Initialize inputs empty if 0 to show placeholders
+baseKillsInput.value = base.kills > 0 ? base.kills : '';
+baseDeathsInput.value = base.deaths > 0 ? base.deaths : '';
 renderHistory(loadHistory());
 updateLiveOutputs();
 
@@ -429,15 +443,12 @@ updateLiveOutputs();
 	});
 });
 
-[baseKillsInput, baseDeathsInput].forEach(input => {
-	input.addEventListener('change', () => {
-		const kills = Number(baseKillsInput.value);
-		const deaths = Number(baseDeathsInput.value);
-		saveBase(kills, deaths);
-		renderHistory(loadHistory());
-		updateLiveOutputs();
+['input', 'change'].forEach(eventName => {
+	[killsInput, deathsInput].forEach(input => {
+		input.addEventListener(eventName, updateSetBaseButtonState);
 	});
 });
+
 
 historyLimitInput.addEventListener('change', event => {
 	const limit = setLimit(Number(event.target.value));
@@ -458,30 +469,37 @@ form.addEventListener('submit', event => {
 });
 
 setBaseBtn.addEventListener('click', () => {
-	const kills = Number(killsInput.value);
-	const deaths = Number(deathsInput.value);
-	if (!Number.isFinite(kills) || !Number.isFinite(deaths)) {
-		showSnackbar('Please fill kills and deaths correctly.', 'error');
+	const hasKills = baseKillsInput.value !== '';
+	const hasDeaths = baseDeathsInput.value !== '';
+	if (!hasKills || !hasDeaths) {
+		showSnackbar('Fill base kills and deaths.', 'error');
 		return;
 	}
-	baseKillsInput.value = kills;
-	baseDeathsInput.value = deaths;
-	saveBase(kills, deaths);
-	// Save current KDR to history if not already present
-	const history = loadHistory();
-	const last = history[0];
-	const kdr = calculateKdr(kills, deaths);
-	if (!last || last.kills !== kills || last.deaths !== deaths) {
-		addCalculation(kills, deaths);
+	const kills = Number(baseKillsInput.value);
+	const deaths = Number(baseDeathsInput.value);
+	if (!Number.isFinite(kills) || !Number.isFinite(deaths)) {
+		showSnackbar('Invalid base values.', 'error');
+		return;
 	}
+	saveBase(kills, deaths);
 	renderHistory(loadHistory());
 	updateLiveOutputs();
-	showSnackbar('Base KDR updated successfully.', 'success');
-	// Force Inputs to match base after setting base
-	killsInput.value = kills;
-	deathsInput.value = deaths;
-	updateLiveOutputs();
+	showSnackbar('Base KDR saved successfully.', 'success');
+	
+	// Clear inputs and reset button state
+	baseKillsInput.value = '';
+	baseDeathsInput.value = '';
+	updateSetBaseButtonState();
 });
+
+// Enable/Disable Save button when typing in Base inputs
+[baseKillsInput, baseDeathsInput].forEach(input => {
+	input.addEventListener('input', () => {
+		updateSetBaseButtonState();
+	});
+});
+
+updateSetBaseButtonState();
 
 swapBaseBtn.addEventListener('click', () => {
 	setSwapPending(true);

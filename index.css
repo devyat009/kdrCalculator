@@ -228,6 +228,12 @@ button {
 	background: #e2e8f0;
 }
 
+.ghost:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	background: #e2e8f0;
+}
+
 .danger {
 	background: #dc2626;
 	color: white;
