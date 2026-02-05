@@ -3,7 +3,7 @@ function renderRealisticTargets(targetKdr) {
 	if (!table) return;
 	table.innerHTML = '';
 
-	const mediumTarget = Number(mediumInput.value);
+	const mediumTarget = parseDecimalInput(mediumInput.value);
 	const kdrTarget = Number.isFinite(mediumTarget) && mediumTarget > 0 ? mediumTarget : 4.0;
 
 	const icons = [
@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const STORAGE_KEY = 'kdr-history';
 const LIMIT_KEY = 'kdr-history-limit';
 const BASE_KEY = 'kdr-base';
+const SETTINGS_KEY = 'kdr-settings';
 
 const form = document.getElementById('kdr-form');
 const killsInput = document.getElementById('kills');
@@ -86,6 +87,17 @@ function formatInteger(value) {
 
 function formatKdrFixed(value, digits = 6) {
 	if (!Number.isFinite(value)) return '∞';
+	return value.toFixed(digits).replace('.', ',');
+}
+
+function parseDecimalInput(value) {
+	const normalized = String(value ?? '').trim().replace(',', '.');
+	if (!normalized) return NaN;
+	return Number(normalized);
+}
+
+function formatDecimalInput(value, digits = 4) {
+	if (!Number.isFinite(value)) return '';
 	return value.toFixed(digits).replace('.', ',');
 }
 
@@ -158,12 +170,35 @@ function loadBase() {
 	}
 }
 
+function loadSettings() {
+	const stored = localStorage.getItem(SETTINGS_KEY);
+	if (!stored) return {};
+	try {
+		const parsed = JSON.parse(stored);
+		return parsed && typeof parsed === 'object' ? parsed : {};
+	} catch (error) {
+		return {};
+	}
+}
+
 function saveBase(kills, deaths) {
 	localStorage.setItem(
 		BASE_KEY,
 		JSON.stringify({
 			kills: Math.max(0, Math.floor(kills || 0)),
 			deaths: Math.max(0, Math.floor(deaths || 0)),
+		}),
+	);
+}
+
+function saveSettings({ kills, deaths, nextTarget, mediumTarget }) {
+	localStorage.setItem(
+		SETTINGS_KEY,
+		JSON.stringify({
+			kills: Number.isFinite(kills) ? Math.max(0, Math.floor(kills)) : null,
+			deaths: Number.isFinite(deaths) ? Math.max(0, Math.floor(deaths)) : null,
+			nextTarget: Number.isFinite(nextTarget) ? nextTarget : null,
+			mediumTarget: Number.isFinite(mediumTarget) ? mediumTarget : null,
 		}),
 	);
 }
@@ -186,8 +221,8 @@ function killsNeededForTarget(kills, deaths, target) {
 }
 
 function updateTargets(kills, deaths) {
-	const nextTarget = Number(nextInput.value);
-	const mediumTarget = Number(mediumInput.value);
+	const nextTarget = parseDecimalInput(nextInput.value);
+	const mediumTarget = parseDecimalInput(mediumInput.value);
 
 	nextKillsEl.textContent = formatInteger(killsNeededForTarget(kills, deaths, nextTarget));
 	mediumKillsEl.textContent = formatInteger(killsNeededForTarget(kills, deaths, mediumTarget));
@@ -324,6 +359,14 @@ function addCalculation(kills, deaths) {
 	const limit = getLimit();
 	const trimmed = history.slice(0, limit);
 	saveHistory(trimmed);
+	const nextTarget = parseDecimalInput(nextInput.value);
+	const mediumTarget = parseDecimalInput(mediumInput.value);
+	saveSettings({
+		kills,
+		deaths,
+		nextTarget,
+		mediumTarget,
+	});
 	renderHistory(trimmed);
 }
 
@@ -352,14 +395,38 @@ function downloadHistory() {
 		showSnackbar('No history to download.', 'error');
 		return;
 	}
+	const base = loadBase();
+	const settings = loadSettings();
+	const latest = history[0];
+	const savedKills = Number.isFinite(settings.kills) ? settings.kills : latest.kills;
+	const savedDeaths = Number.isFinite(settings.deaths) ? settings.deaths : latest.deaths;
+	const savedNextTarget = Number.isFinite(settings.nextTarget) ? settings.nextTarget : null;
+	const savedMediumTarget = Number.isFinite(settings.mediumTarget) ? settings.mediumTarget : null;
 
 	const rows = [
-		['timestamp', 'kills', 'deaths', 'kdr'],
+		[
+			'timestamp',
+			'kills',
+			'deaths',
+			'kdr',
+			'baseKills',
+			'baseDeaths',
+			'nextTarget',
+			'mediumTarget',
+			'lastKills',
+			'lastDeaths',
+		],
 		...history.map(item => [
 			new Date(item.timestamp).toISOString(),
 			item.kills,
 			item.deaths,
 			Number.isFinite(item.kdr) ? item.kdr.toFixed(14) : 'Infinity',
+			base.kills,
+			base.deaths,
+			Number.isFinite(savedNextTarget) ? savedNextTarget : '',
+			Number.isFinite(savedMediumTarget) ? savedMediumTarget : '',
+			savedKills,
+			savedDeaths,
 		]),
 	];
 	const csv = rows.map(row => row.join(',')).join('\n');
@@ -431,10 +498,22 @@ function clearHistory() {
 
 historyLimitInput.value = getLimit();
 const base = loadBase();
+const settings = loadSettings();
+const history = loadHistory();
+const latest = history[0];
 // Initialize inputs empty if 0 to show placeholders
 baseKillsInput.value = base.kills > 0 ? base.kills : '';
 baseDeathsInput.value = base.deaths > 0 ? base.deaths : '';
-renderHistory(loadHistory());
+nextInput.value = '';
+mediumInput.value = '';
+if (Number.isFinite(settings.kills) && Number.isFinite(settings.deaths)) {
+	killsInput.value = settings.kills;
+	deathsInput.value = settings.deaths;
+} else if (latest) {
+	killsInput.value = latest.kills;
+	deathsInput.value = latest.deaths;
+}
+renderHistory(history);
 updateLiveOutputs();
 
 ['input', 'change'].forEach(eventName => {
