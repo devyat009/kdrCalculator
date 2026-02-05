@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>KDR Calculator</title>
+		<link rel="stylesheet" href="index.css" />
+		<link rel="stylesheet" href="loading.css" />
+		<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+	</head>
+	<body>
+		<div id="kdr-loading-overlay" class="kdr-loading-overlay" aria-live="polite" aria-label="Loading KDR Calculator">
+			<div class="kdr-loading-card">
+				<div class="kdr-loading-icons" aria-hidden="true">
+					<span class="material-symbols-outlined kdr-loading-icon" style="color:#fbbf24;">sports_esports</span>
+					<span class="material-symbols-outlined kdr-loading-icon delay-1" style="color:#38bdf8;">military_tech</span>
+					<span class="material-symbols-outlined kdr-loading-icon delay-2" style="color:#f87171;">leaderboard</span>
+					<span class="material-symbols-outlined kdr-loading-icon delay-3" style="color:#a3e635;">shield</span>
+				</div>
+				<p class="kdr-loading-text">Loading your stats...</p>
+			</div>
+		</div>
+		<main class="page">
+			<header class="hero">
+				<div>
+					<p class="eyebrow">Performance tracker</p>
+					<h1>KDR Calculator</h1>
+					<p class="subhead">Calculate current KDR, targets, and keep your last results saved locally.</p>
+				</div>
+				<div class="stat-card">
+					<p class="stat-label">Current KDR</p>
+					<div class="stat-value" id="current-kdr">0,00</div>
+					<div class="stat-delta" id="current-kdr-delta">
+						<span class="arrow">→</span>
+						<span class="delta-text">No changes yet</span>
+					</div>
+					<p class="stat-sub" id="current-next">Define next KDR target.</p>
+				</div>
+			</header>
+
+			<section class="grid">
+				<form class="card" id="kdr-form">
+					<h2 class="section-title"><span class="material-symbols-outlined" aria-hidden="true">tune</span>Inputs</h2>
+					<div class="field-grid">
+						<label class="field">
+							<span><span class="material-symbols-outlined label-icon" aria-hidden="true">swords</span>Kills</span>
+							<input type="number" min="0" step="1" id="kills" placeholder="150" required />
+						</label>
+						<label class="field">
+							<span><span class="material-symbols-outlined label-icon" aria-hidden="true">skull</span>Deaths</span>
+							<input type="number" min="0" step="1" id="deaths" placeholder="40" required />
+						</label>
+					</div>
+					<div class="field-grid">
+						<label class="field">
+							<span><span class="material-symbols-outlined label-icon" aria-hidden="true">trending_up</span>Next KDR target (ex: 3.16 → 3.17)</span>
+							<input type="number" min="0" step="0.01" id="next-kdr" placeholder="3.17" />
+						</label>
+						<label class="field">
+							<span><span class="material-symbols-outlined label-icon" aria-hidden="true">insights</span>Expected KDR (medium)</span>
+							<input type="number" min="0" step="0.01" id="medium-kdr" placeholder="4" />
+						</label>
+					</div>
+					<div class="field-grid">
+						<label class="field">
+							<span><span class="material-symbols-outlined label-icon" aria-hidden="true">history</span>History limit</span>
+							<input type="number" min="1" step="1" id="history-limit" />
+						</label>
+					</div>
+					<div class="actions">
+						<button type="submit" class="primary"><span class="material-symbols-outlined btn-icon" aria-hidden="true">calculate</span>Calculate & save</button>
+					</div>
+					<p class="helper" id="form-helper">Calculations are saved locally in your browser.</p>
+				</form>
+
+				<div class="card">
+					<h2 class="section-title"><span class="material-symbols-outlined" aria-hidden="true">target</span>Targets</h2>
+					<div class="target-list">
+						<div class="target-item">
+							<p class="target-label">Kills needed for Next KDR</p>
+							<p class="target-value" id="next-kills">0</p>
+						</div>
+						<div class="target-item">
+							<p class="target-label">Kills needed for Medium KDR</p>
+							<p class="target-value" id="medium-kills">0</p>
+						</div>
+						<div class="note">
+							Assumes no additional deaths. Values update as you edit the inputs.
+						</div>
+					</div>
+					<div class="target-table-wrapper">
+						<table class="target-table">
+							<thead>
+								<tr>
+									<th></th>
+									<th>Kills</th>
+									<th>Max Deaths</th>
+									<th>KDR</th>
+								</tr>
+							</thead>
+							<tbody id="realistic-targets"></tbody>
+						</table>
+					</div>
+					</div>
+				</div>
+
+				<div class="card">
+					<h2>Base KDR Reference</h2>
+					<p class="helper">Use this base to compare KDR changes.</p>
+					<div class="field-grid">
+						<label class="field">
+							<span>Base kills</span>
+							<input type="number" min="0" step="1" id="base-kills" placeholder="100" />
+						</label>
+						<label class="field">
+							<span>Base deaths</span>
+							<input type="number" min="0" step="1" id="base-deaths" placeholder="25" />
+						</label>
+					</div>
+					<div class="actions">
+						<button type="button" class="ghost" id="set-base-from-current">Set Base KDR</button>
+						<button type="button" class="ghost" id="swap-base-current">Swap base/current</button>
+					</div>
+					<div class="swap-warning">
+						<p class="helper">This will swap current inputs with Base KDR. Use with caution.</p>
+						<button type="button" class="danger is-hidden" id="confirm-swap">Confirm swap</button>
+					</div>
+				</div>
+			</section>
+
+			<section class="card history">
+				<div class="history-header">
+					<div>
+						<h2 class="section-title"><span class="material-symbols-outlined" aria-hidden="true">history</span>History</h2>
+						<p class="helper">Last calculations (auto-saved).</p>
+					</div>
+					<div class="history-actions">
+						<label class="ghost file-label">
+							<span class="material-symbols-outlined btn-icon" aria-hidden="true">upload_file</span>Import
+							<input type="file" id="import-history" accept=".csv" />
+						</label>
+						<button type="button" class="ghost" id="download-history"><span class="material-symbols-outlined btn-icon" aria-hidden="true">download</span>Download</button>
+						<button type="button" class="ghost" id="clear-history"><span class="material-symbols-outlined btn-icon" aria-hidden="true">delete</span>Clear</button>
+					</div>
+				</div>
+				<div class="history-list" id="history-list">
+					<p class="empty">No calculations yet.</p>
+				</div>
+			</section>
+		</main>
+
+		<div class="snackbar-container" id="snackbar-container" aria-live="polite" aria-atomic="true"></div>
+
+		<script src="app.js"></script>
+	</body>
+</html>
