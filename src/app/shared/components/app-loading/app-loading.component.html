@@ -1,4 +1,18 @@
-<!-- loading.component.html -->
-<div class="loading-overlay">
-  <div class="spinner"></div>
+<div
+  id="kdr-loading-overlay"
+  class="kdr-loading-overlay is-hidden fixed inset-0 z-9999 flex items-center justify-center bg-[radial-gradient(circle_at_top,#eef2ff_0%,#f8fafc_45%,#ecfeff_100%)]"
+  aria-live="polite"
+  aria-label="Loading KDR Calculator"
+>
+  <div
+    class="rounded-3xl bg-white px-10 py-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.1)]"
+  >
+    <div class="mb-6 flex items-center justify-center gap-[1.2rem]" aria-hidden="true">
+      <span class="material-symbols-outlined kdr-loading-icon" style="color:#fbbf24;">sports_esports</span>
+      <span class="material-symbols-outlined kdr-loading-icon [animation-delay:0.2s]" style="color:#38bdf8;">military_tech</span>
+      <span class="material-symbols-outlined kdr-loading-icon [animation-delay:0.4s]" style="color:#f87171;">leaderboard</span>
+      <span class="material-symbols-outlined kdr-loading-icon [animation-delay:0.6s]" style="color:#a3e635;">shield</span>
+    </div>
+    <p class="text-[1.1rem] tracking-[0.04em] text-slate-600">Loading your stats...</p>
+  </div>
 </div>
