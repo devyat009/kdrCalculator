@@ -15,6 +15,7 @@
         <p class="text-[0.7rem] uppercase tracking-[0.2em] text-white/60">Current KDR</p>
         <div class="text-[2.2rem] font-bold" id="current-kdr">{{currentKdr}}</div>
         <div class="flex items-center gap-1.5 text-[0.85rem] text-white/70" id="current-kdr-delta">
+          <div class="flex items-center gap-1.5 text-[0.85rem] text-white/70" id="current-kdr-delta">
           @if (deltaKdr !== 0){
             <span class="material-symbols-outlined text-base" aria-hidden="true" [ngClass]="{
               'delta-up': deltaKdr > 0,
@@ -31,9 +32,11 @@
               {{ deltaKdr > 0 ? '+' : '' }}{{ deltaKdr.toFixed(4).replace('.', ',') }}
             </span>
           }
-
-          <span class="text-base">→</span>
-          <span>No changes yet</span>
+          @if (deltaKdr === 0){
+            <span class="text-base">→</span>
+            <span>No changes yet</span>
+          }
+        </div>
         </div>
         <p class="text-[0.8rem] leading-[1.3] text-white/65" id="current-next">Define next KDR target.</p>
       </div>
@@ -92,7 +95,10 @@
         </div> -->
         <div class="flex flex-wrap gap-3">
           <button type="submit"
-            class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_20px_rgba(79,70,229,0.25)] transition hover:-translate-y-0.5"><span
+            [disabled]="kdrForm.invalid"
+            class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_20px_rgba(79,70,229,0.25)] transition hover:-translate-y-0.5
+            disabled:cursor-not-allowed disabled:bg-indigo-200 disabled:opacity-60
+            "><span
               class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
               aria-hidden="true"
               >calculate</span>Calculate & save</button>
@@ -172,6 +178,7 @@
             </div>
             <div class="flex flex-wrap mt-2 gap-3">
               <button type="button"
+                [disabled]="baseKdrForm.invalid"
                 class="mouse-pointer rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:opacity-60"
                 id="set-base-from-current" disabled>Save Base KDR</button>
               <!-- <button type="button"
