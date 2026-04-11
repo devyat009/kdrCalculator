@@ -35,8 +35,8 @@ export class KdrService {
     return await firstValueFrom(this.http.get<ApiResponse<KdrData[]>>(`${this.baseUrl}/kdrCalculator/getAllKdr`));
   }
 
-  async saveBaseKdr(baseKills: number, baseDeaths: number): Promise<void> {
-    await firstValueFrom(this.http.post(`${this.baseUrl}/kdrCalculator/createBase`, { baseKills, baseDeaths }));
+  async saveBaseKdr(baseKills: number, baseDeaths: number): Promise<ApiResponse<void>> {
+    return await firstValueFrom(this.http.post<ApiResponse<void>>(`${this.baseUrl}/kdrCalculator/createBase`, { baseKills, baseDeaths }));
   }
 
   async getBaseKdr(): Promise<ApiResponse<BaseKdr>> {

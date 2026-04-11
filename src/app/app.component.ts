@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 // custom components
 import { AppLoadingComponent } from './shared/components/app-loading/app-loading.component';
 // services
@@ -18,7 +19,7 @@ import { enviroment } from '../enviroments/enviroment';
 ],
 })
 export class App implements OnInit {
-  private readonly kdrService = inject(KdrService);
+  private readonly platformId = inject(PLATFORM_ID);
 
   loading: boolean = false;
 
@@ -31,18 +32,12 @@ export class App implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.loading = true;
-    await this.checkServerHealth();
-  }
-
-
-  private async checkServerHealth(): Promise<void> {
-    try {
-      const isAlive = await this.kdrService.checkServiceHealth();
-      enviroment.serverAlive = isAlive === true;
-      console.log(`Server alive: ${enviroment.serverAlive}`);
-    } catch (e) {
+    if (!isPlatformBrowser(this.platformId)) {
       enviroment.serverAlive = false;
-      console.error('Health check failed:', e);
+      return;
     }
+
+    // Health check already executed in APP_INITIALIZER.
+    this.loading = false;
   }
 }

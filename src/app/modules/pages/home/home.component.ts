@@ -45,6 +45,7 @@ export class HomeComponent implements OnInit {
   kdrData: KdrData[] = [];
   baseKdrData: BaseKdr | null = null;
   realisticTargets: RealisticTarget[] = [];
+  kdrHistory: KdrData[] = [];
 
   // storage keys
   SETTINGS_KEY = 'kdr-settings';
@@ -60,26 +61,29 @@ export class HomeComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     console.log(enviroment.serverAlive);
-    if (enviroment.serverAlive) {
-      try {
+    try {
+      await Promise.allSettled([
+        this.getKdrData(),
+        this.getBaseKdrData(),
+      ]);
+      await this.loadKdrHistory();
+      console.log('KDR data loaded:', this.kdrData);
 
-        await Promise.allSettled([
-          this.getKdrData(),
-          this.getBaseKdrData(),
-        ]);
+      if (this.baseKdrData) {
+        this.baseKdrForm.patchValue({
+          baseKills: this.baseKdrData.baseKills,
+          baseDeaths: this.baseKdrData.baseDeaths,
+        });
 
-        console.log('KDR data loaded:', this.kdrData);
-        if (this.kdrData.length > 0) {
-          this.currentKdr = this.baseKdrData?.baseKills && this.baseKdrData.baseDeaths
-            ? (this.baseKdrData.baseKills / this.baseKdrData.baseDeaths).toFixed(8).replace('.', ',') : '0,00';
-        }
-        this.updateDeltaKdr();
-        this.cdr.markForCheck();
-      } catch (e) {
-        console.error('Failed to load KDR data:', e);
+        this.currentKdr = this.baseKdrData.baseDeaths > 0
+          ? (this.baseKdrData.baseKills / this.baseKdrData.baseDeaths).toFixed(8).replace('.', ',')
+          : '0,00';
       }
-    } else {
-      // TO DO WIHTOUT SERVER
+
+      this.updateDeltaKdr();
+      this.cdr.markForCheck();
+    } catch (e) {
+      console.error('Failed to initialize KDR data:', e);
     }
   }
 
@@ -95,6 +99,8 @@ export class HomeComponent implements OnInit {
         });
         if (response.success) {
           await this.getKdrData();
+          await this.loadKdrHistory();
+          this.snackBar.open('KDR data saved successfully', 'Close', { panelClass: ['snack-bar-success'] });
         } else {
           this.snackBar.open(`Failed to save KDR data: ${response.message}`, 'Close', { panelClass: ['snack-bar-error'] });
         }
@@ -111,30 +117,53 @@ export class HomeComponent implements OnInit {
       };
       this.kdrData.push(newEntry);
       localStorage.setItem(this.KDR_KEY, JSON.stringify(this.kdrData));
+      this.kdrHistory = [...this.kdrData].sort(
+        (a, b) => new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime(),
+      );
       console.log('KDR data saved locally:', newEntry);
+      this.snackBar.open('KDR data saved locally', 'Close', { panelClass: ['snack-bar-success'] });
     }
 
+    this.updateDeltaKdr();
     this.renderRealisticTargets();
   }
 
   // save data section
-  saveBaseKdr(): void {
-    localStorage.setItem(
-      this.BASE_KEY,
-      JSON.stringify({
-        kills: Math.max(0, Math.floor(this.baseKdrForm.value.baseKills || 0)),
-        deaths: Math.max(0, Math.floor(this.baseKdrForm.value.baseDeaths || 0)),
-      }),
-    );
+  async saveBaseKdr(): Promise<void> {
+    console.log('Saving base KDR:', this.baseKdrForm.value);
     if (enviroment.serverAlive) {
-      this.kdrService.saveBaseKdr(this.baseKdrForm.value.baseKills, this.baseKdrForm.value.baseDeaths)
-      .then(() => {
-        console.log('Base KDR saved successfully');
-
-      })
-      .catch(e => {
+      try {
+        const response = await this.kdrService.saveBaseKdr(this.baseKdrForm.value.baseKills, this.baseKdrForm.value.baseDeaths);
+        if (response.success) {
+          await this.getBaseKdrData();
+          this.updateDeltaKdr();
+          this.snackBar.open('Base KDR saved successfully', 'Close', { panelClass: ['snack-bar-success'] });
+        } else {
+          this.snackBar.open(`Failed to save base KDR: ${response.message}`, 'Close', { panelClass: ['snack-bar-error'] });
+        }
+      } catch (e) {
         console.error('Failed to save base KDR:', e);
-      });
+      }
+    } else {
+      const baseKills = Math.max(0, Math.floor(this.baseKdrForm.value.baseKills || 0));
+      const baseDeaths = Math.max(0, Math.floor(this.baseKdrForm.value.baseDeaths || 0));
+
+      const localBase: BaseKdr = {
+        idBaseKdr: 'local',
+        baseKills,
+        baseDeaths,
+        createDate: new Date().toISOString(),
+      };
+
+      localStorage.setItem(
+        this.BASE_KEY,
+        JSON.stringify(localBase),
+      );
+
+      this.baseKdrData = localBase;
+      this.currentKdr = baseDeaths > 0 ? (baseKills / baseDeaths).toFixed(8).replace('.', ',') : '0,00';
+      this.updateDeltaKdr();
+      this.snackBar.open('Base KDR saved locally', 'Close', { panelClass: ['snack-bar-success'] });
     }
 
   }
@@ -180,15 +209,44 @@ export class HomeComponent implements OnInit {
     if (enviroment.serverAlive) {
       try {
         const response = await this.kdrService.getBaseKdr();
-        response.success ? this.baseKdrData = response.data :
+        if (response.success) {
+          this.baseKdrData = response.data;
+          this.baseKdrForm.patchValue({
+            baseKills: this.baseKdrData.baseKills,
+            baseDeaths: this.baseKdrData.baseDeaths,
+          });
+        } else {
           this.snackBar.open(`Failed to fetch base KDR data: ${response.message}`, 'Close', { panelClass: ['snack-bar-error'] });
+        }
       } catch (e) {
         console.error('Failed to fetch base KDR data:', e);
       }
     } else { // local storage fallback
       const storedData = localStorage.getItem(this.BASE_KEY);
       if (storedData) {
-        this.baseKdrData = JSON.parse(storedData);
+        const parsed = JSON.parse(storedData) as Partial<BaseKdr> & { kills?: number; deaths?: number };
+
+        const baseKills = Number.isFinite(parsed.baseKills)
+          ? Number(parsed.baseKills)
+          : Number(parsed.kills ?? 0);
+
+        const baseDeaths = Number.isFinite(parsed.baseDeaths)
+          ? Number(parsed.baseDeaths)
+          : Number(parsed.deaths ?? 0);
+
+        this.baseKdrData = {
+          idBaseKdr: parsed.idBaseKdr ?? 'local',
+          baseKills,
+          baseDeaths,
+          createDate: parsed.createDate ?? new Date().toISOString(),
+        };
+
+        this.baseKdrForm.patchValue({
+          baseKills: this.baseKdrData.baseKills,
+          baseDeaths: this.baseKdrData.baseDeaths,
+        });
+      } else {
+        this.baseKdrData = null;
       }
     }
   }
@@ -220,9 +278,35 @@ export class HomeComponent implements OnInit {
   loadSettings(): void {
   }
 
-  loadHitory(): void {
+  async loadKdrHistory(): Promise<void> {
+    if (enviroment.serverAlive) {
+      try {
+        const response = await this.kdrService.getAll();
+        if (response.success && Array.isArray(response.data)) {
+          // Sort by timestamp descending (latest first)
+          this.kdrHistory = response.data.sort((a, b) =>
+            new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime()
+          );
+          console.log('KDR history loaded:', this.kdrHistory);
+        } else {
+          this.kdrHistory = [];
+        }
+      } catch (e) {
+        this.kdrHistory = [];
+        console.error('Failed to fetch KDR history:', e);
+      }
+    } else {
+      const storedData = localStorage.getItem(this.KDR_KEY);
+      if (storedData) {
+        const parsed = JSON.parse(storedData) as KdrData[];
+        this.kdrHistory = Array.isArray(parsed)
+          ? parsed.sort((a, b) => new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime())
+          : [];
+      } else {
+        this.kdrHistory = [];
+      }
+    }
   }
-
 
   // download data section
   downloadHitory(): void {

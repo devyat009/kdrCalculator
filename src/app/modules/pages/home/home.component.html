@@ -180,7 +180,9 @@
               <button type="button"
                 [disabled]="baseKdrForm.invalid"
                 class="mouse-pointer rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:opacity-60"
-                id="set-base-from-current" disabled>Save Base KDR</button>
+                id="set-base-from-current"
+                (click)="saveBaseKdr()"
+                >Save Base KDR</button>
               <!-- <button type="button"
                   class="rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200"
                   id="swap-base-current">Swap base/current</button> -->
@@ -233,9 +235,52 @@
               aria-hidden="true">delete</span>Clear</button>
         </div>
       </div>
-      <div id="history-list"
-        class="grid gap-3 [&_.delta-down]:text-red-600 [&_.delta-neutral]:text-slate-500 [&_.delta-up]:text-green-600 [&_.history-item]:flex [&_.history-item]:items-center [&_.history-item]:justify-between [&_.history-item]:gap-4 [&_.history-item]:rounded-[14px] [&_.history-item]:bg-slate-50 [&_.history-item]:px-4 [&_.history-item]:py-3.5 [&_.history-info]:flex [&_.history-info]:flex-col [&_.history-info]:gap-0.5 [&_.history-kdr]:text-[1.1rem] [&_.history-kdr]:font-bold [&_.history-meta]:text-[0.8rem] [&_.history-meta]:text-slate-500">
-        <p class="text-[0.9rem] text-slate-400">No calculations yet.</p>
+      <div id="history-list" class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr>
+              <th class="px-3 py-2 text-left">Date</th>
+              <th class="px-3 py-2 text-center">Kills</th>
+              <th class="px-3 py-2 text-center">Deaths</th>
+              <th class="px-3 py-2 text-center">KDR</th>
+              <th class="px-3 py-2 text-center">Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (kdrHistory.length === 0) {
+              <tr>
+                <td colspan="5" class="text-center text-slate-400 py-4">No calculations yet.</td>
+              </tr>
+            }
+            @for (entry of kdrHistory; track entry.timeStamp) {
+              <tr class="history-item">
+                <td class="history-meta px-3 py-2">{{ entry.timeStamp | date:'dd/MM/yy HH:mm' }}</td>
+                <td class="px-3 py-2 text-center">{{ entry.kills }}</td>
+                <td class="px-3 py-2 text-center">{{ entry.deaths }}</td>
+                <td class="history-kdr px-3 py-2 text-center font-bold">
+                  {{ (entry.kills / entry.deaths) | number:'1.2-2' }}
+                </td>
+                <td class="px-3 py-2 text-center">
+                  @if ($index < kdrHistory.length - 1) {
+                    <span
+                      [class.delta-up]="((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) > 0"
+                      [class.delta-down]="((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) < 0"
+                      [class.delta-neutral]="((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) === 0"
+                    >
+                      {{
+                        ((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) > 0 ? '+' : ''
+                      }}{{
+                        ((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) | number:'1.4-4'
+                      }}
+                    </span>
+                  } @else {
+                    <span class="delta-neutral">-</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
     </section>
   </main>

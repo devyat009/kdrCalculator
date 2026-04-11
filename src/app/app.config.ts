@@ -1,5 +1,6 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, APP_INITIALIZER, PLATFORM_ID } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -15,7 +16,12 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: () => () => {
-        // Use Angular's inject to get the service
+        const platformId = inject(PLATFORM_ID);
+        if (!isPlatformBrowser(platformId)) {
+          enviroment.serverAlive = false;
+          return Promise.resolve();
+        }
+
         const kdrService = inject(KdrService);
         return kdrService.checkServiceHealth()
           .then((isAlive: boolean) => {
