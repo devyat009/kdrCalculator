@@ -1,0 +1,32 @@
+.table-surface,
+.table-surface .mat-mdc-header-row,
+.table-surface .mat-mdc-row,
+.table-surface .mat-mdc-header-cell,
+.table-surface .mat-mdc-cell {
+	background-color: #ffff;
+}
+
+.table-surface {
+	border-left: 1px solid rgba(148, 163, 184, 0.2);
+	border-right: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.table-paginator,
+.table-paginator .mat-mdc-paginator-container {
+	background-color: #fff;
+  border-left: 1px solid rgba(148, 163, 184, 0.2);
+	border-right: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.delta-up {
+	color: #16a34a !important;
+}
+
+.delta-down {
+	color: #dc2626 !important;
+}
+
+.delta-neutral {
+	color: #64748b !important;
+}

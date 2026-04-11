@@ -18,6 +18,9 @@ export interface KdrData {
   deaths: number;
   killDeathRatioTarget: number;
   killDeathRatioMediumTarget: number;
+  // Calculated fields NOT MAPPED TO API, used for frontend display
+  kdr?: number;
+  deltaKdr?: number;
 }
 
 

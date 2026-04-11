@@ -207,82 +207,17 @@
       </div>
     </section>
 
-    <section
-      class="flex flex-col gap-4 rounded-[20px] border border-slate-400/20 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
-      <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h2 class="flex items-center gap-2 text-xl font-semibold"><span class="material-symbols-outlined"
-              aria-hidden="true">history</span>History</h2>
-          <p class="text-[0.85rem] text-slate-500">Last calculations (auto-saved).</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2.5">
-          <label
-            class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200">
-            <span
-              class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
-              aria-hidden="true">upload_file</span>Import
-            <input class="hidden" type="file" id="import-history" accept=".csv" />
-          </label>
-          <button type="button"
-            class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200"
-            id="download-history"><span
-              class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
-              aria-hidden="true">download</span>Download</button>
-          <button type="button"
-            class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200"
-            id="clear-history"><span
-              class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
-              aria-hidden="true">delete</span>Clear</button>
-        </div>
-      </div>
-      <div id="history-list" class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr>
-              <th class="px-3 py-2 text-left">Date</th>
-              <th class="px-3 py-2 text-center">Kills</th>
-              <th class="px-3 py-2 text-center">Deaths</th>
-              <th class="px-3 py-2 text-center">KDR</th>
-              <th class="px-3 py-2 text-center">Δ</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (kdrHistory.length === 0) {
-              <tr>
-                <td colspan="5" class="text-center text-slate-400 py-4">No calculations yet.</td>
-              </tr>
-            }
-            @for (entry of kdrHistory; track entry.timeStamp) {
-              <tr class="history-item">
-                <td class="history-meta px-3 py-2">{{ entry.timeStamp | date:'dd/MM/yy HH:mm' }}</td>
-                <td class="px-3 py-2 text-center">{{ entry.kills }}</td>
-                <td class="px-3 py-2 text-center">{{ entry.deaths }}</td>
-                <td class="history-kdr px-3 py-2 text-center font-bold">
-                  {{ (entry.kills / entry.deaths) | number:'1.2-2' }}
-                </td>
-                <td class="px-3 py-2 text-center">
-                  @if ($index < kdrHistory.length - 1) {
-                    <span
-                      [class.delta-up]="((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) > 0"
-                      [class.delta-down]="((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) < 0"
-                      [class.delta-neutral]="((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) === 0"
-                    >
-                      {{
-                        ((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) > 0 ? '+' : ''
-                      }}{{
-                        ((entry.kills / entry.deaths) - (kdrHistory[$index + 1].kills / kdrHistory[$index + 1].deaths)) | number:'1.4-4'
-                      }}
-                    </span>
-                  } @else {
-                    <span class="delta-neutral">-</span>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <app-table-a
+      [data]="kdrHistory"
+      [columns]="columns"
+      [titleIcon]="'history'"
+      [title]="'History'"
+      [subTitle]="'Last calculations'"
+      [showImportButton]="true"
+      [showDownloadButton]="true"
+      [showClearButton]="true"
+      ></app-table-a>
+
   </main>
 
   <div id="snackbar-container"

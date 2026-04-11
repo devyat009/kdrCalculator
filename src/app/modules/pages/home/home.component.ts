@@ -5,10 +5,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 // custom components
 import { AppLoadingComponent } from '../../../shared/components/app-loading/app-loading.component';
+import { TableAComponent } from "../../../shared/components/table-component/table-a.component";
+import { TableColumn } from '../../../shared/components/table-component/models/table-a.models';
 // services
 import { KdrService } from '../../../shared/services/kdrService.service';
 import { enviroment } from '../../../../enviroments/enviroment';
 import { BaseKdr, KdrData, RealisticTarget } from '../../../shared/components/models/kdrServiceModel.model';
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -19,7 +22,8 @@ import { BaseKdr, KdrData, RealisticTarget } from '../../../shared/components/mo
     ReactiveFormsModule,
     MatButtonModule,
     MatSnackBarModule,
-  ]
+    TableAComponent
+]
 })
 export class HomeComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -53,6 +57,52 @@ export class HomeComponent implements OnInit {
   KDR_KEY = 'kdr-data';
   STORAGE_KEY = 'kdr-history';
   LIMIT_KEY = 'kdr-history-limit';
+
+  // table data
+  columns: TableColumn<any>[] = [
+    {
+      label: 'Date',
+      property: 'timeStamp',
+      type: 'date',
+      visible: true
+    },
+    {
+      label: 'Kills',
+      property: 'kills',
+      type: 'number',
+      visible: true
+    },
+    {
+      label: 'Deaths',
+      property: 'deaths',
+      type: 'number',
+      visible: true
+    },
+    {
+      label: 'Kill/Death Ratio Target',
+      property: 'killDeathRatioTarget',
+      type: 'number',
+      visible: true,
+    },
+    {
+      label: 'Expected Medium KDR',
+      property: 'killDeathRatioMediumTarget',
+      type: 'number',
+      visible: true
+    },
+    {
+      label: 'KDR',
+      property: 'kdr',
+      type: 'number',
+      visible: true
+    },
+    {
+      label: 'Delta KDR',
+      property: 'deltaKdr',
+      type: 'number',
+      visible: true
+    }
+  ];
 
   constructor(
     private snackBar: MatSnackBar,
@@ -287,6 +337,18 @@ export class HomeComponent implements OnInit {
           this.kdrHistory = response.data.sort((a, b) =>
             new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime()
           );
+          this.kdrHistory.forEach((e, index, history) => {
+            const currentKdr = this.calculateKdr(e.kills, e.deaths);
+            e.kdr = currentKdr;
+
+            if (index < history.length - 1) {
+              const next = history[index + 1];
+              const nextKdr = this.calculateKdr(next.kills, next.deaths);
+              e.deltaKdr = +(currentKdr - nextKdr).toFixed(5);
+            } else {
+              e.deltaKdr = undefined;
+            }
+          });
           console.log('KDR history loaded:', this.kdrHistory);
         } else {
           this.kdrHistory = [];
@@ -302,6 +364,19 @@ export class HomeComponent implements OnInit {
         this.kdrHistory = Array.isArray(parsed)
           ? parsed.sort((a, b) => new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime())
           : [];
+
+        this.kdrHistory.forEach((e, index, history) => {
+          const currentKdr = this.calculateKdr(e.kills, e.deaths);
+          e.kdr = currentKdr;
+
+          if (index < history.length - 1) {
+            const next = history[index + 1];
+            const nextKdr = this.calculateKdr(next.kills, next.deaths);
+            e.deltaKdr = +(currentKdr - nextKdr).toFixed(4);
+          } else {
+            e.deltaKdr = undefined;
+          }
+        });
       } else {
         this.kdrHistory = [];
       }
