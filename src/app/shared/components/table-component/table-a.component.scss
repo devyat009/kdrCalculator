@@ -1,3 +1,8 @@
+.table-surface {
+	--table-line-color: rgba(148, 163, 184, 0.2);
+	--mat-table-row-item-outline-color: var(--table-line-color);
+}
+
 .table-surface,
 .table-surface .mat-mdc-header-row,
 .table-surface .mat-mdc-row,
@@ -7,16 +12,21 @@
 }
 
 .table-surface {
-	border-left: 1px solid rgba(148, 163, 184, 0.2);
-	border-right: 1px solid rgba(148, 163, 184, 0.2);
+	border-left: 1px solid var(--table-line-color);
+	border-right: 1px solid var(--table-line-color);
+}
+
+.table-surface .mat-mdc-header-cell,
+.table-surface .mat-mdc-cell {
+	border-bottom-color: var(--table-line-color);
 }
 
 .table-paginator,
 .table-paginator .mat-mdc-paginator-container {
 	background-color: #fff;
-  border-left: 1px solid rgba(148, 163, 184, 0.2);
+	border-left: 1px solid rgba(148, 163, 184, 0.2);
 	border-right: 1px solid rgba(148, 163, 184, 0.2);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+	border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .delta-up {

@@ -1,11 +1,12 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
+import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser, NgIf } from '@angular/common';
 import { Form, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 // custom components
 import { AppLoadingComponent } from '../../../shared/components/app-loading/app-loading.component';
 import { TableAComponent } from "../../../shared/components/table-component/table-a.component";
+import { ChartsComponent } from '../../../shared/components/charts-component/charts.component';
 import { TableColumn } from '../../../shared/components/table-component/models/table-a.models';
 // services
 import { KdrService } from '../../../shared/services/kdrService.service';
@@ -22,12 +23,15 @@ import { BaseKdr, KdrData, RealisticTarget } from '../../../shared/components/mo
     ReactiveFormsModule,
     MatButtonModule,
     MatSnackBarModule,
-    TableAComponent
+    TableAComponent,
+    ChartsComponent
 ]
 })
 export class HomeComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly kdrService = inject(KdrService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // forms
   baseKdrForm: FormGroup = this.fb.group({
@@ -166,7 +170,9 @@ export class HomeComponent implements OnInit {
         killDeathRatioMediumTarget: this.kdrForm.value.expectedMediumKdr,
       };
       this.kdrData.push(newEntry);
-      localStorage.setItem(this.KDR_KEY, JSON.stringify(this.kdrData));
+      if (this.canUseLocalStorage()) {
+        localStorage.setItem(this.KDR_KEY, JSON.stringify(this.kdrData));
+      }
       this.kdrHistory = [...this.kdrData].sort(
         (a, b) => new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime(),
       );
@@ -205,10 +211,12 @@ export class HomeComponent implements OnInit {
         createDate: new Date().toISOString(),
       };
 
-      localStorage.setItem(
-        this.BASE_KEY,
-        JSON.stringify(localBase),
-      );
+      if (this.canUseLocalStorage()) {
+        localStorage.setItem(
+          this.BASE_KEY,
+          JSON.stringify(localBase),
+        );
+      }
 
       this.baseKdrData = localBase;
       this.currentKdr = baseDeaths > 0 ? (baseKills / baseDeaths).toFixed(8).replace('.', ',') : '0,00';
@@ -218,6 +226,9 @@ export class HomeComponent implements OnInit {
 
   }
   saveSettings(kills: number, deaths: number, nextTarget: number, mediumTarget: number): void {
+    if (!this.canUseLocalStorage()) {
+      return;
+    }
     localStorage.setItem(
       this.SETTINGS_KEY,
       JSON.stringify({
@@ -248,6 +259,10 @@ export class HomeComponent implements OnInit {
         console.error('Failed to fetch KDR data:', e);
       }
     } else { // local storage fallback
+      if (!this.canUseLocalStorage()) {
+        this.kdrData = [];
+        return;
+      }
       const storedData = localStorage.getItem(this.KDR_KEY);
       if (storedData) {
         this.kdrData = JSON.parse(storedData);
@@ -272,6 +287,10 @@ export class HomeComponent implements OnInit {
         console.error('Failed to fetch base KDR data:', e);
       }
     } else { // local storage fallback
+      if (!this.canUseLocalStorage()) {
+        this.baseKdrData = null;
+        return;
+      }
       const storedData = localStorage.getItem(this.BASE_KEY);
       if (storedData) {
         const parsed = JSON.parse(storedData) as Partial<BaseKdr> & { kills?: number; deaths?: number };
@@ -358,6 +377,10 @@ export class HomeComponent implements OnInit {
         console.error('Failed to fetch KDR history:', e);
       }
     } else {
+      if (!this.canUseLocalStorage()) {
+        this.kdrHistory = [];
+        return;
+      }
       const storedData = localStorage.getItem(this.KDR_KEY);
       if (storedData) {
         const parsed = JSON.parse(storedData) as KdrData[];
@@ -381,6 +404,13 @@ export class HomeComponent implements OnInit {
         this.kdrHistory = [];
       }
     }
+  }
+
+  private canUseLocalStorage(): boolean {
+    return this.isBrowser
+      && typeof globalThis.localStorage !== 'undefined'
+      && typeof globalThis.localStorage.getItem === 'function'
+      && typeof globalThis.localStorage.setItem === 'function';
   }
 
   // download data section
