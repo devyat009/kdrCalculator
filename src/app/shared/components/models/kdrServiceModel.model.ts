@@ -9,6 +9,7 @@ export interface saveKdrRequestModel {
   deaths: number;
   killDeathRatioTarget: number;
   killDeathRatioMediumTarget: number;
+  timeStamp?: string;
 }
 
 

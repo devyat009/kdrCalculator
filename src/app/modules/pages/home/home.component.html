@@ -84,6 +84,16 @@
               type="text" inputmode="decimal" id="medium-kdr" placeholder="3,1750" />
           </label>
         </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">calendar_clock</span>Date & Time (24h)</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              formControlName="timeStamp"
+              type="datetime-local" step="1" id="timestamp" />
+          </label>
+        </div>
         <!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
             <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"

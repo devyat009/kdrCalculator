@@ -11,7 +11,7 @@ import { TableColumn } from '../../../shared/components/table-component/models/t
 // services
 import { KdrService } from '../../../shared/services/kdrService.service';
 import { enviroment } from '../../../../enviroments/enviroment';
-import { BaseKdr, KdrData, RealisticTarget } from '../../../shared/components/models/kdrServiceModel.model';
+import { BaseKdr, KdrData, RealisticTarget, saveKdrRequestModel } from '../../../shared/components/models/kdrServiceModel.model';
 
 @Component({
   selector: 'app-home',
@@ -44,6 +44,7 @@ export class HomeComponent implements OnInit {
     deaths: [null, Validators.required],
     kdrTarget: [null, Validators.required],
     expectedMediumKdr: [null, Validators.required],
+    timeStamp: [null],
   });
 
   // data
@@ -143,14 +144,28 @@ export class HomeComponent implements OnInit {
 
   // calculate section
   async calculateSave(): Promise<void> {
+    const rawTimeStamp = this.kdrForm.value.timeStamp;
+    let formattedTimeStamp: string | undefined;
+
+    if (rawTimeStamp) {
+      formattedTimeStamp = rawTimeStamp.includes('T') && rawTimeStamp.split('T')[1].length === 5
+        ? `${rawTimeStamp}:00`
+        : rawTimeStamp;
+    }
+
     if (enviroment.serverAlive) {
       try {
-        const response = await this.kdrService.createKdr({
+        const payload: saveKdrRequestModel = {
           kills: this.kdrForm.value.kills,
           deaths: this.kdrForm.value.deaths,
           killDeathRatioTarget: this.kdrForm.value.kdrTarget,
           killDeathRatioMediumTarget: this.kdrForm.value.expectedMediumKdr,
-        });
+        };
+        if (formattedTimeStamp) {
+          payload.timeStamp = formattedTimeStamp;
+        }
+
+        const response = await this.kdrService.createKdr(payload);
         if (response.success) {
           await this.getKdrData();
           await this.loadKdrHistory();
@@ -163,7 +178,7 @@ export class HomeComponent implements OnInit {
       }
     } else { // local storage fallback
       const newEntry: KdrData = {
-        timeStamp: new Date().toISOString(),
+        timeStamp: formattedTimeStamp || new Date().toISOString(),
         kills: this.kdrForm.value.kills,
         deaths: this.kdrForm.value.deaths,
         killDeathRatioTarget: this.kdrForm.value.kdrTarget,
