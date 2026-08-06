@@ -2,9 +2,13 @@
 
 # Compiled output
 /dist
+/docs
 /tmp
 /out-tsc
 /bazel-out
+/kdrCalculator.Tray/bin
+/kdrCalculator.Tray/obj
+/kdrCalculator.Tray/publish
 
 # Node
 /node_modules

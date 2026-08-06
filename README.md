@@ -34,7 +34,23 @@ To build the project run:
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+This will compile your project and store the build artifacts in the `docs/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Standalone Executable (System Tray)
+
+To run the frontend on the desktop as a standalone executable that lives in the **System Tray**:
+
+1. Generate the production build (the artifacts will be stored in the `docs` directory):
+```bash
+npm run build
+```
+
+2. Publish the C# wrapper (`kdrCalculator.Tray`) into a single portable `.exe` file. The wrapper is configured to automatically embed the Angular `docs` folder inside the executable!
+```powershell
+dotnet publish .\kdrCalculator.Tray\kdrCalculator.Tray.csproj -c Release -r win-x64 --self-contained true -o .\kdrCalculator.Tray\publish
+```
+
+The final standalone application will be located at `kdrCalculator.Tray\publish\kdrCalculator.Tray.exe`. When executed, it will appear in the system tray and serve the embedded Angular application locally.
 
 ## Running unit tests
 
