@@ -1,0 +1,242 @@
+<div
+  class="min-h-screen bg-[radial-gradient(circle_at_top,#eef2ff_0%,#f8fafc_45%,#ecfeff_100%)] px-4 py-8 pb-12 text-slate-900 font-[Inter,system-ui,-apple-system,sans-serif]">
+  <app-loading></app-loading>
+
+  <main class="mx-auto flex w-full max-w-275 flex-col gap-6">
+    <header
+      class="flex flex-col gap-6 rounded-3xl border border-slate-400/20 bg-white/80 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)] lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Performance tracker</p>
+        <h1 class="my-1 text-[clamp(2rem,4vw,2.8rem)] font-bold leading-tight">KDR Calculator</h1>
+        <p class="max-w-125 text-slate-600">Calculate current KDR, targets, and keep your last results saved locally.
+        </p>
+      </div>
+      <div class="grid min-w-55 max-w-sm gap-2 self-start rounded-[20px] bg-slate-900 px-6 py-5 text-white">
+        <p class="text-[0.7rem] uppercase tracking-[0.2em] text-white/60">Current KDR</p>
+        <div class="text-[2.2rem] font-bold" id="current-kdr">{{currentKdr}}</div>
+        <div class="flex items-center gap-1.5 text-[0.85rem] text-white/70" id="current-kdr-delta">
+          <div class="flex items-center gap-1.5 text-[0.85rem] text-white/70" id="current-kdr-delta">
+          @if (deltaKdr !== 0){
+            <span class="material-symbols-outlined text-base" aria-hidden="true" [ngClass]="{
+              'delta-up': deltaKdr > 0,
+              'delta-down': deltaKdr < 0,
+              'delta-neutral': deltaKdr === 0
+            }">
+              {{ deltaKdr > 0 ? 'trending_up' : (deltaKdr < 0 ? 'trending_down' : 'remove') }}
+            </span>
+            <span [ngClass]="{
+              'delta-up': deltaKdr > 0,
+              'delta-down': deltaKdr < 0,
+              'delta-neutral': deltaKdr === 0
+            }">
+              {{ deltaKdr > 0 ? '+' : '' }}{{ deltaKdr.toFixed(4).replace('.', ',') }}
+            </span>
+          }
+          @if (deltaKdr === 0){
+            <span class="text-base">→</span>
+            <span>No changes yet</span>
+          }
+        </div>
+        </div>
+        <p class="text-[0.8rem] leading-[1.3] text-white/65" id="current-next">Define next KDR target.</p>
+      </div>
+    </header>
+
+    <section class="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+      <form [formGroup]="kdrForm" (ngSubmit)="calculateSave()"
+        class="flex flex-col gap-5 rounded-[20px] border border-slate-400/20 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+        id="kdr-form">
+        <h2 class="flex items-center gap-2 text-xl font-semibold"><span class="material-symbols-outlined"
+            aria-hidden="true">tune</span>Inputs</h2>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">swords</span>Kills</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              formControlName="kills"
+              type="number" min="0" step="1" id="kills" placeholder="150" required />
+          </label>
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">skull</span>Deaths</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              formControlName="deaths"
+              type="number" min="0" step="1" id="deaths" placeholder="40" required />
+          </label>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">trending_up</span>Next KDR target (ex: 3.16 → 3.17)</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              formControlName="kdrTarget"
+              type="text" inputmode="decimal" id="next-kdr" placeholder="3,1750" />
+          </label>
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">insights</span>Expected KDR (medium)</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              formControlName="expectedMediumKdr"
+              type="text" inputmode="decimal" id="medium-kdr" placeholder="3,1750" />
+          </label>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">calendar_clock</span>Date & Time (24h)</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              formControlName="timeStamp"
+              type="datetime-local" step="1" id="timestamp" />
+          </label>
+        </div>
+        <!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+            <span><span class="material-symbols-outlined mr-1.5 inline-flex text-base align-middle"
+                aria-hidden="true">history</span>History limit</span>
+            <input
+              class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+              type="number" min="1" step="1" id="history-limit" />
+          </label>
+        </div> -->
+        <div class="flex flex-wrap gap-3">
+          <button type="submit"
+            [disabled]="kdrForm.invalid"
+            class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_20px_rgba(79,70,229,0.25)] transition hover:-translate-y-0.5
+            disabled:cursor-not-allowed disabled:bg-indigo-200 disabled:opacity-60
+            "><span
+              class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
+              aria-hidden="true"
+              >calculate</span>Calculate & save</button>
+        </div>
+        <p class="text-[0.85rem] text-slate-500" id="form-helper">Calculations are saved locally in your browser.</p>
+      </form>
+
+      <div
+        class="flex flex-col gap-5 rounded-[20px] border border-slate-400/20 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+        <h2 class="flex items-center gap-2 text-xl font-semibold"><span class="material-symbols-outlined"
+            aria-hidden="true">target</span>Targets</h2>
+        <div class="grid gap-3">
+          <div class="flex items-center justify-between rounded-[14px] bg-slate-50 px-4 py-3.5 font-semibold">
+            <p class="text-[0.85rem] text-slate-500">Kills needed for Next KDR</p>
+            <p class="text-xl text-slate-900" id="next-kills">0</p>
+          </div>
+          <div class="flex items-center justify-between rounded-[14px] bg-slate-50 px-4 py-3.5 font-semibold">
+            <p class="text-[0.85rem] text-slate-500">Kills needed for Medium KDR</p>
+            <p class="text-xl text-slate-900" id="medium-kills">0</p>
+          </div>
+          <div class="text-[0.8rem] text-slate-400">
+            Assumes no additional deaths. Values update as you edit the inputs.
+          </div>
+        </div>
+        <div class="mt-4">
+          <table
+            class="w-full overflow-hidden rounded-xl border-collapse bg-slate-50 [&_td.icon-cell]:px-[0.3rem] [&_td.icon-cell]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:text-center [&_td]:text-[0.98rem] [&_td]:text-slate-900 [&_th]:bg-slate-200 [&_th]:px-3 [&_th]:py-2 [&_th]:text-center [&_th]:text-[0.95rem] [&_th]:font-semibold [&_th]:text-slate-700">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Kills</th>
+                <th>Max Deaths</th>
+                <th>KDR</th>
+              </tr>
+            </thead>
+            <tbody id="realistic-targets" class="[&_tr:nth-child(even)_td]:bg-slate-100">
+              @for (target of realisticTargets; track target.kills) {
+                <tr>
+                  <td class="icon-cell">
+                    <span class="material-symbols-outlined" style="font-size:1.3em;vertical-align:middle;" aria-hidden="true">
+                      {{target.icon}}
+                    </span>
+                  </td>
+                  <td>{{target.kills}}</td>
+                  <td>{{target.deaths}}</td>
+                  <td>{{target.kdr}}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div
+        class="flex flex-col gap-5 rounded-[20px] border border-slate-400/20 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+        <h2 class="text-xl font-semibold">Base KDR Reference</h2>
+        <p class="text-[0.85rem] text-slate-500">Use this base to compare KDR changes.</p>
+
+        <section>
+          <form [formGroup]="baseKdrForm" (ngSubmit)="saveBaseKdr()">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+                <span>Base kills</span>
+                <input
+                  class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+                  formControlName="baseKills"
+                  type="number" min="0" step="1" id="base-kills" placeholder="100" />
+              </label>
+              <label class="flex flex-col gap-1.5 text-[0.85rem] font-semibold text-slate-600">
+                <span>Base deaths</span>
+                <input
+                  class="rounded-xl border border-slate-200 px-3.5 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+                  formControlName="baseDeaths"
+                  type="number" min="0" step="1" id="base-deaths" placeholder="25" />
+              </label>
+            </div>
+            <div class="flex flex-wrap mt-2 gap-3">
+              <button type="button"
+                [disabled]="baseKdrForm.invalid"
+                class="mouse-pointer rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:opacity-60"
+                id="set-base-from-current"
+                (click)="saveBaseKdr()"
+                >Save Base KDR</button>
+              <!-- <button type="button"
+                  class="rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200"
+                  id="swap-base-current">Swap base/current</button> -->
+            </div>
+            <!-- <div class="flex flex-col gap-2.5">
+                <p class="text-[0.85rem] text-slate-500">This will swap current inputs with Base KDR. Use with caution.</p>
+                <button type="button"
+                  class="danger is-hidden rounded-xl bg-red-600 px-5 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_20px_rgba(220,38,38,0.25)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  id="confirm-swap">Confirm swap</button>
+              </div> -->
+          </form>
+        </section>
+      </div>
+
+      <div
+        class="flex flex-col gap-3 rounded-[20px] border border-slate-400/20 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+        <h2 class="flex items-center gap-2 text-xl font-semibold">
+          <span class="material-symbols-outlined" aria-hidden="true">info</span>Note
+        </h2>
+        <p class="text-[0.9rem] leading-6 text-slate-600">Most games round the KDR upwards. For example, if your KDR is
+          3,1551, it will be shown as 3,16. That is why sometimes it feels longer to move out of certain numbers.</p>
+      </div>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+      <app-charts [data]="kdrHistory" [chartType]="'merge'"></app-charts>
+      <app-charts [data]="kdrHistory" [chartType]="'initOpts'"></app-charts>
+    </section>
+
+    <app-table-a
+      [data]="kdrHistory"
+      [columns]="columns"
+      [titleIcon]="'history'"
+      [title]="'History'"
+      [subTitle]="'Last calculations'"
+      [showImportButton]="true"
+      [showDownloadButton]="true"
+      [showClearButton]="true"
+      ></app-table-a>
+
+
+  </main>
+
+  <div id="snackbar-container"
+    class="snackbar-container fixed bottom-6 right-6 z-999 grid max-w-80 gap-2.5 [&_.snackbar.error]:bg-red-600 [&_.snackbar.info]:bg-slate-900 [&_.snackbar.show]:translate-y-0 [&_.snackbar.show]:opacity-100 [&_.snackbar.success]:bg-green-600 [&_.snackbar]:translate-y-2 [&_.snackbar]:rounded-xl [&_.snackbar]:bg-slate-900 [&_.snackbar]:px-4 [&_.snackbar]:py-3.5 [&_.snackbar]:text-[0.9rem] [&_.snackbar]:text-slate-50 [&_.snackbar]:opacity-0 [&_.snackbar]:shadow-[0_12px_28px_rgba(15,23,42,0.2)] [&_.snackbar]:transition"
+    aria-live="polite" aria-atomic="true"></div>
+</div>

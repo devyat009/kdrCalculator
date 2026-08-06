@@ -1,0 +1,19 @@
+.chart-wrapper {
+	width: 100%;
+}
+
+.chart-topbar,
+.chart-body {
+	--chart-line-color: rgba(148, 163, 184, 0.2);
+}
+
+.chart-body {
+	min-height: 392px;
+}
+
+.demo-chart {
+	display: block;
+	width: 100%;
+	min-height: 360px;
+	height: 360px;
+}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script>
+      // Get the current path from the URL.
+      const path = window.location.pathname;
+
+      // Preserve the path, query parameters, and hash.
+      const redirect = path + window.location.search + window.location.hash;
+
+      // Use sessionStorage to store the redirect path.
+      sessionStorage.setItem('redirect', redirect);
+
+      // Redirect to the root index.html.
+      window.location.href = '/';
+    </script>
+  </head>
+</html>

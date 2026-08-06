@@ -1,0 +1,114 @@
+<div class="mat-elevation-z8">
+    <!-- top bar-->
+      <div
+        class="flex flex-col gap-4 rounded-tl-2xl rounded-tr-2xl border-t border-l border-r border-slate-400/20 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+        <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            @if (showTitle) {
+              <h2 class="flex items-center gap-2 text-xl font-semibold"><span class="material-symbols-outlined"
+                  aria-hidden="true">history</span>{{ title }}</h2>
+            }
+            @if (showSubTitle) {
+              <p class="text-[0.85rem] text-slate-500">{{subTitle}}</p>
+            }
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            @if (showImportButton) {
+              <label
+                class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200">
+                <span
+                  class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
+                  aria-hidden="true">upload_file</span>Import
+                <input class="hidden" type="file" id="import-history" accept=".csv" />
+              </label>
+            }
+            @if (showDownloadButton) {
+              <button type="button"
+                class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200"
+                id="download-history"><span
+                  class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
+                  aria-hidden="true">download</span>Download</button>
+            }
+            @if (showClearButton) {
+            <button type="button"
+              class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-[0.95rem] font-semibold text-slate-700 transition hover:bg-slate-200"
+              id="clear-history"><span
+                class="material-symbols-outlined inline-flex items-center justify-center text-[1.1rem] leading-none align-middle"
+                aria-hidden="true">delete</span>Clear</button>
+            }
+          </div>
+        </div>
+      </div>
+    <div class="overflow-hidden rounded-b-2xl">
+    <table
+      mat-table
+      mat-sort
+      [dataSource]="dataSource"
+      class="table-surface bg-slate-100 w-full"
+    >
+      <ng-container *ngFor="let column of columns">
+        <ng-container *ngIf="column.type === 'date'">
+          <ng-container [matColumnDef]="column.property">
+            <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
+            <td mat-cell *matCellDef="let row">{{ row[column.property] | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngFor="let column of columns">
+        <ng-container *ngIf="column.type === 'text'">
+          <ng-container [matColumnDef]="column.property">
+            <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
+            <td mat-cell *matCellDef="let row">{{ row[column.property] }}</td>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngFor="let column of columns">
+        <ng-container *ngIf="column.type === 'number'">
+          <ng-container [matColumnDef]="column.property">
+            <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [class.delta-up]="column.property === 'deltaKdr' && row[column.property] > 0"
+              [class.delta-down]="column.property === 'deltaKdr' && row[column.property] < 0"
+              [class.delta-neutral]="column.property === 'deltaKdr' && row[column.property] === 0"
+            >
+              {{ column.property === 'deltaKdr' && row[column.property] > 0 ? '+' : '' }}{{ row[column.property] | number:(column.property === 'deltaKdr' ? '1.4-4' : '1.0-3') }}
+            </td>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngFor="let column of columns">
+        <ng-container *ngIf="column.type === 'boolean'">
+          <ng-container [matColumnDef]="column.property">
+            <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
+            <td mat-cell *matCellDef="let row">{{ row[column.property] }}</td>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngFor="let column of columns">
+        <ng-container *ngIf="column.type === 'button'">
+          <ng-container [matColumnDef]="column.property">
+            <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
+            <td mat-cell *matCellDef="let row">{{ row[column.property] }}</td>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="pageSizeOptions"
+        [pageSize]="pageSize"
+        showFirstLastButtons
+      class="table-paginator bg-white"
+        aria-label="Select page of periodic elements">
+    </mat-paginator>
+  </div>
+</div>
